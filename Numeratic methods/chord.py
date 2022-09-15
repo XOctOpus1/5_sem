@@ -25,7 +25,7 @@ if y.subs(x, a) * ydiff.subs(x, a) > 0:
         xk = Xl[k] - ((y.subs(x, Xl[k]))*((Xl[k]-a)/(y.subs(x, Xl[k])-y.subs(x, a))))
         Xl.append(float(xk))
         if abs(Xl[k+1] - Xl[k]) < E:
-            print(f"[{Xl[k+1]} ; {Xl[k+1] + 2*(Xl[k] - Xl[k+1])}]")
+            print(f"{Xl[k+1]}")
             break
         k += 1   
 if y.subs(x, b) * ydiff.subs(x, b) > 0:
@@ -33,7 +33,7 @@ if y.subs(x, b) * ydiff.subs(x, b) > 0:
         xk = Xl[k] - ((y.subs(x, Xl[k]))*((Xl[k]-b)/(y.subs(x, Xl[k])-y.subs(x, b))))
         Xl.append(float(xk))
         if abs(Xl[k+1] - Xl[k]) < E:
-            print(f"[{Xl[k+1]} ; {Xl[k+1] + 2*(Xl[k] - Xl[k+1])}]")
+            print(f"{Xl[k+1]}")
             break
         k += 1
 
