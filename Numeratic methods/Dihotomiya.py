@@ -30,6 +30,6 @@ while min/(2**n) > E:
 
 
 x = (a+b)/2
-table.append([n, a, b, x, funk(a), funk(b), funk(x), 1/(2**n)])
+table.append([n, a, b, x, funk(a), funk(b), funk(x), min/(2**n)])
 
 print(tabulate(table, headers='firstrow'))
