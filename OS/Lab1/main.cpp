@@ -233,7 +233,10 @@ namespace os {
             }
         };
     }
-    int main() {
+} 
+
+
+int main() {
         std::string Process = "B";
         std::string ProcessF = "F";
         std::string ProcessG = "G";
@@ -242,4 +245,3 @@ namespace os {
         manager.run();
         return 0;
     }
-} 
