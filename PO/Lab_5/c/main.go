@@ -1,5 +1,3 @@
-// Create an application with three threads. Each thread works with its own array, the threads check the sum of the elements of their array with the sums of the elements of other threads and stop when all three sums are equal to each other. If the sums are not equal, each thread adds one to one element of the array or subtracts one from one element of the array, then retests the sums for equality. At the moment of stopping all three streams, the sums of array elements must be the same.
-
 package main
 
 import (
