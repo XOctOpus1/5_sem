@@ -27,7 +27,7 @@ def integrate_r(a, b, n, dx = (b - a) / n)
   end
   
   def f2(x)
-    return (1 / (3 + Math.cos(x)))
+    return (1 / (3 + 2*Math.cos(x)))
   end
   
   x = integrate_r(0.0, 0.5, 100000.0) {|x| f1(x)}
