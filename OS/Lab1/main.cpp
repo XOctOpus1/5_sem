@@ -6,242 +6,267 @@
 // of function computation to  to correctly organize computation using multiple processes
 
 #include <iostream>
-#include <string>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <sys/wait.h>
-#include <signal.h>
-#include <cstring>
 #include <variant>
-#include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <thread>
+#include <unistd.h>
+#include <fcntl.h>
 
-namespace os {
-    namespace lab1 {
-        namespace compfuncs {
-            struct hard_fail {};
-            struct INT_SUM {
-                int operator()(int x) {
-                    if (x < 0)
-                        return std::variant<hard_fail, int>(hard_fail());
-                    int sum = 0;
-                    for (int i = 0; i <= x; ++i)
-                        sum += i;
-                    return std::variant<hard_fail, int>(sum);
-                }
-            };
-            struct INT_MULT {
-                int operator()(int x) {
-                    if (x < 0)
-                        return std::variant<hard_fail, int>(hard_fail());
-                    int mult = 1;
-                    for (int i = 1; i <= x; ++i)
-                        mult *= i;
-                    return std::variant<hard_fail, int>(mult);
-                }
-            };
-            struct INT_FACT {
-                int operator()(int x) {
-                    if (x < 0)
-                        return std::variant<hard_fail, int>(hard_fail());
-                    int fact = 1;
-                    for (int i = 2; i <= x; ++i)
-                        fact *= i;
-                    return std::variant<hard_fail, int>(fact);
-                }
-            };
-            template<typename T>
-            std::variant<hard_fail, int> trial_f(int x) {
-                return T()(x);
+namespace compfuncs {
+    enum INT_FUNC {
+        INT_SUM,
+        INT_MULT,
+        INT_FACT
+    };
+
+    template <INT_FUNC F>
+    struct trial_f;
+
+    template <>
+    struct trial_f<INT_SUM> {
+        int operator()(int x) {
+            int sum = 0;
+            for (int i = 1; i <= x; i++) {
+                sum += i;
+            }
+            return sum;
+        }
+    };
+
+    template <>
+    struct trial_f<INT_MULT> {
+        int operator()(int x) {
+            int mult = 1;
+            for (int i = 1; i <= x; i++) {
+                mult *= i;
+            }
+            return mult;
+        }
+    };
+
+    template <>
+    struct trial_f<INT_FACT> {
+        int operator()(int x) {
+            int fact = 1;
+            for (int i = 1; i <= x; i++) {
+                fact *= i;
+            }
+            return fact;
+        }
+    };
+}
+
+namespace manager {
+    class Manager {
+    private:
+        std::string threadB;
+        std::string threadF;
+        std::string threadG;
+        std::string threaddB;
+        int fdB;
+        int fdF;
+        int fdG;
+        int fddB;
+        int x;
+        std::variant<int, std::string> y;
+        std::mutex m;
+        std::condition_variable cv;
+        bool ready;
+        bool processed;
+        bool hardFail;
+
+        void createFO(std::string thread) {
+            std::string filename = thread + ".txt";
+            int fd = open(filename.c_str(), O_CREAT | O_RDWR, 0666);
+            if (fd == -1) {
+                std::cout << "Error creating file " << filename << std::endl;
+                exit(1);
+            }
+            if (thread == threadB) {
+                fdB = fd;
+            }
+            else if (thread == threadF) {
+                fdF = fd;
+            }
+            else if (thread == threadG) {
+                fdG = fd;
+            }
+            else if (thread == threaddB) {
+                fddB = fd;
             }
         }
-        class Manager {
-        private:
-            std::string Process;
-            std::string ProcessF;
-            std::string ProcessG;
-            std::string ProcessB;
-            int fo;
-            int foF;
-            int foG;
-            int foB;
-            int x;
-            std::variant<compfuncs::hard_fail, int> y;
-            std::mutex m;
-            std::condition_variable cv;
-            bool ready;
-            bool processed;
-            bool hardFail;
-            bool isHardFail(std::variant<compfuncs::hard_fail, int> y) {
-                return std::holds_alternative<compfuncs::hard_fail>(y);
+
+
+        void openFO(std::string name) {
+            if (name == "B") {
+                fdB = open(name.c_str(), O_RDONLY);
             }
-            void createFO(std::string Process) {
-                unlink(Process.c_str());
-                if (mkfifo(Process.c_str(), 1000) == -1)
-                    std::cout << "Can't create fifo" << std::endl;
+            else if (name == "F") {
+                fdF = open(name.c_str(), O_RDONLY);
             }
-            void openFO(std::string Process) {
-                if (Process == ProcessF) {
-                    foF = open(Process.c_str(), O_RDONLY);
-                    if (foF == -1)
-                        std::cout << "Can't open fifo" << std::endl;
-                }
-                else if (Process == ProcessG) {
-                    foG = open(Process.c_str(), O_RDONLY);
-                    if (foG == -1)
-                        std::cout << "Can't open fifo" << std::endl;
-                }
-                else if (Process == ProcessB) {
-                    foB = open(Process.c_str(), O_WRONLY);
-                    if (foB == -1)
-                        std::cout << "Can't open fifo" << std::endl;
-                }
+            else if (name == "G") {
+                fdG = open(name.c_str(), O_RDONLY);
             }
-            void closeFO(std::string Process) {
-                if (Process == ProcessF) {
-                    close(foF);
-                }
-                else if (Process == ProcessG) {
-                    close(foG);
-                }
-                else if (Process == ProcessB) {
-                    close(foB);
-                }
+            else if (name == "dB") {
+                fddB = open(name.c_str(), O_WRONLY);
             }
-            void readFO(std::string Process) {
-                if (Process == ProcessF) {
-                    if (read(foF, &x, sizeof(int)) == -1)
-                        std::cout << "Can't read fifo" << std::endl;
-                }
-                else if (Process == ProcessG) {
-                    if (read(foG, &y, sizeof(y)) == -1)
-                        std::cout << "Can't read fifo" << std::endl;
-                }
+        }
+
+        void readFO(std::string name) {
+            if (name == "B") {
+                read(fdB, &x, sizeof(x));
             }
-            void writeFO(std::string Process) {
-                if (Process == ProcessB) {
-                    if (write(foB, &y, sizeof(y)) == -1)
-                        std::cout << "Can't write fifo" << std::endl;
-                }
+            else if (name == "F") {
+                read(fdF, &x, sizeof(x));
             }
-            void process() {
+            else if (name == "G") {
+                read(fdG, &x, sizeof(x));
+            }
+        }
+
+        void writeFO(std::string name) {
+            if (name == "dB") {
+                write(fddB, &y, sizeof(y));
+            }
+        }
+
+        void closeFO(std::string name) {
+            if (name == "B") {
+                close(fdB);
+            }
+            else if (name == "F") {
+                close(fdF);
+            }
+            else if (name == "G") {
+                close(fdG);
+            }
+            else if (name == "dB") {
+                close(fddB);
+            }
+        }
+
+        bool isHardFail(std::variant<int, std::string> y) {
+            if (std::holds_alternative<std::string>(y)) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        void tB() {
+            std::unique_lock<std::mutex> lk(m);
+            cv.wait(lk, [this] { return ready; });
+            if (x == 0) {
+                hardFail = true;
+                cv.notify_all();
+                return;
+            }
+            y = compfuncs::trial_f<compfuncs::INT_SUM>()(x);
+            processed = true;
+            cv.notify_all();
+        }
+
+        void tF() {
+            std::unique_lock<std::mutex> lk(m);
+            cv.wait(lk, [this] { return ready; });
+            if (x == 0) {
+                hardFail = true;
+                cv.notify_all();
+                return;
+            }
+            y = compfuncs::trial_f<compfuncs::INT_MULT>()(x);
+            processed = true;
+            cv.notify_all();
+        }
+
+        void tG() {
+            std::unique_lock<std::mutex> lk(m);
+            cv.wait(lk, [this] { return ready; });
+            if (x == 0) {
+                hardFail = true;
+                cv.notify_all();
+                return;
+            }
+            y = compfuncs::trial_f<compfuncs::INT_FACT>()(x);
+            processed = true;
+            cv.notify_all();
+        }
+
+        void tdB() {
+            std::unique_lock<std::mutex> lk(m);
+            cv.wait(lk, [this] { return processed; });
+            if (hardFail) {
+                y = "Hard fail";
+            }
+            writeFO(threaddB);
+            ready = false;
+            processed = false;
+            hardFail = false;
+            cv.notify_all();
+        }
+
+    public:
+        Manager(std::string threadB, std::string threadF, std::string threadG, std::string threaddB) {
+            this->threadB = threadB;
+            this->threadF = threadF;
+            this->threadG = threadG;
+            this->threaddB = threaddB;
+            createFO(threadB);
+            createFO(threadF);
+            createFO(threadG);
+            createFO(threaddB);
+            openFO(threadB);
+            openFO(threadF);
+            openFO(threadG);
+            openFO(threaddB);
+            ready = false;
+            processed = false;
+            hardFail = false;
+        }
+
+        void run() {
+            std::thread tB(&Manager::threadB, this);
+            std::thread tF(&Manager::threadF, this);
+            std::thread tG(&Manager::threadG, this);
+            std::thread tdB(&Manager::threaddB, this);
+            while (true) {
+                readFO(threadB);
+                if (x == 0) {
+                    break;
+                }
+                readFO(threadF);
+                readFO(threadG);
+                ready = true;
+                cv.notify_all();
                 std::unique_lock<std::mutex> lk(m);
-                cv.wait(lk, [this] { return ready; });
-                if (isHardFail(y)) {
-                    hardFail = true;
-                    processed = true;
-                    cv.notify_one();
-                }
-                else {
-                    y = compfuncs::trial_f<compfuncs::INT_SUM>(std::get<int>(y));
-                    processed = true;
-                    cv.notify_one();
-                }
+                cv.wait(lk, [this] { return !ready; });
+                closeFO(threadB);
+                closeFO(threadF);
+                closeFO(threadG);
+                closeFO(threaddB);
             }
-            void processF() {
-                std::unique_lock<std::mutex> lk(m);
-                cv.wait(lk, [this] { return ready; });
-                if (isHardFail(y)) {
-                    hardFail = true;
-                    processed = true;
-                    cv.notify_one();
-                }
-                else {
-                    y = compfuncs::trial_f<compfuncs::INT_MULT>(std::get<int>(y));
-                    processed = true;
-                    cv.notify_one();
-                }
-            }
-            void processG() {
-                std::unique_lock<std::mutex> lk(m);
-                cv.wait(lk, [this] { return ready; });
-                if (isHardFail(y)) {
-                    hardFail = true;
-                    processed = true;
-                    cv.notify_one();
-                }
-                else {
-                    y = compfuncs::trial_f<compfuncs::INT_FACT>(std::get<int>(y));
-                    processed = true;
-                    cv.notify_one();
-                }
-            }
-            void processB() {
-                std::unique_lock<std::mutex> lk(m);
-                cv.wait(lk, [this] { return ready; });
-                if (isHardFail(y)) {
-                    hardFail = true;
-                    processed = true;
-                    cv.notify_one();
-                }
-                else {
-                    y = compfuncs::trial_f<compfuncs::INT_SUM>(std::get<int>(y));
-                    processed = true;
-                    cv.notify_one();
-                }
-            }
-        public:
-            Manager(std::string Process, std::string ProcessF, std::string ProcessG, std::string ProcessB) {
-                this->Process = Process;
-                this->ProcessF = ProcessF;
-                this->ProcessG = ProcessG;
-                this->ProcessB = ProcessB;
-                ready = false;
-                processed = false;
-                hardFail = false;
-            }
-            void run() {
-                createFO(Process);
-                createFO(ProcessF);
-                createFO(ProcessG);
-                createFO(ProcessB);
-                openFO(Process);
-                openFO(ProcessF);
-                openFO(ProcessG);
-                openFO(ProcessB);
-                std::thread t1(&Manager::process, this);
-                std::thread t2(&Manager::processF, this);
-                std::thread t3(&Manager::processG, this);
-                std::thread t4(&Manager::processB, this);
-                while (true) {
-                    readFO(Process);
-                    if (x == 0) {
-                        break;
-                    }
-                    ready = true;
-                    cv.notify_all();
-                    std::unique_lock<std::mutex> lk(m);
-                    cv.wait(lk, [this] { return processed; });
-                    if (hardFail) {
-                        break;
-                    }
-                    writeFO(ProcessB);
-                    ready = false;
-                    processed = false;
-                }
-                t1.join();
-                t2.join();
-                t3.join();
-                t4.join();
-                closeFO(Process);
-                closeFO(ProcessF);
-                closeFO(ProcessG);
-                closeFO(ProcessB);
-            }
-        };
-    }
-} 
+            tB.join();
+            tF.join();
+            tG.join();
+            tdB.join();
+        }
+    };
+}
+
 
 
 int main() {
-        std::string Process = "B";
-        std::string ProcessF = "F";
-        std::string ProcessG = "G";
-        std::string ProcessB = "B";
-        manager::Manager manager(Process, ProcessF, ProcessG, ProcessB);
-        manager.run();
-        return 0;
-    }
+    // int x;
+    // std::cin >> x;
+    // std::cout << compfuncs::trial_f<compfuncs::INT_SUM>()(x) << std::endl;
+    // std::cout << compfuncs::trial_f<compfuncs::INT_MULT>()(x) << std::endl;
+    // std::cout << compfuncs::trial_f<compfuncs::INT_FACT>()(x) << std::endl;
+
+    manager::Manager manager("B", "F", "G", "dB");
+    manager.run();
+    return 0;
+}
+
+
