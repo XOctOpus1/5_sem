@@ -258,11 +258,11 @@ namespace manager {
 
 
 int main() {
-    // int x;
-    // std::cin >> x;
-    // std::cout << compfuncs::trial_f<compfuncs::INT_SUM>()(x) << std::endl;
-    // std::cout << compfuncs::trial_f<compfuncs::INT_MULT>()(x) << std::endl;
-    // std::cout << compfuncs::trial_f<compfuncs::INT_FACT>()(x) << std::endl;
+    int x;
+    std::cin >> x;
+    std::cout << compfuncs::trial_f<compfuncs::INT_SUM>()(x) << std::endl;
+    std::cout << compfuncs::trial_f<compfuncs::INT_MULT>()(x) << std::endl;
+    std::cout << compfuncs::trial_f<compfuncs::INT_FACT>()(x) << std::endl;
 
     manager::Manager manager("B", "F", "G", "dB");
     manager.run();
