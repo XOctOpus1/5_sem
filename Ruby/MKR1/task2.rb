@@ -1,88 +1,101 @@
 #var 4
 
-# abiturient: id, Surname, First name, Last name, Address, Phone, Grades.
-# Create an array of objects. Output :
-#      a) a list of abiturients with unsatisfactory grades;
-#      b ) a list of abiturient whose total points are higher than the given one ;
-#      c ) choose a given number and abiturient with the highest the sum of points (also display a complete list of applicants with semi-pass sum ) .
 
-class Abiturient
-    attr_accessor :id, :surname, :name, :lastname, :address, :phone, :grades
 
-    def initialize(id, surname, name, lastname, address, phone, grades)
+class Abiturients
+    def initialize(id, surname, first_name, last_name, address, phone, grades)
         @id = id
         @surname = surname
-        @name = name
-        @lastname = lastname
+        @first_name = first_name
+        @last_name = last_name
         @address = address
         @phone = phone
         @grades = grades
     end
-
-    def to_s
-        "#{@id} #{@surname} #{@name} #{@lastname} #{@address} #{@phone} #{@grades}"
-    end
-end
-
-def read_file(file_name)
-    file = File.open(file_name, 'r')
-    abiturients = []
-    file.each_line do |line|
-        id, surname, name, lastname, address, phone, grades = line.split(' ')
-        abiturients << Abiturient.new(id, surname, name, lastname, address, phone, grades)
-    end
-    file.close
-    abiturients
-end
-
-def print_abiturients(abiturients)
-    abiturients.each do |abiturient|
-        puts abiturient
-    end
-end
-
-def print_abiturients_with_unsatisfactory_grades(abiturients)
-    abiturients.each do |abiturient|
-        if abiturient.grades.to_i < 4
-            puts abiturient
-        end
-    end
-end
-
-def print_abiturients_with_higher_points(abiturients, points)
-    abiturients.each do |abiturient|
-        if abiturient.grades.to_i > points
-            puts abiturient
-        end
-    end
-end
-
-def print_abiturients_with_highest_points(abiturients, number)
-    abiturients.sort! { |a, b| b.grades.to_i <=> a.grades.to_i }
-    puts "abiturients with highest points: #{abiturients[0..number - 1]}"
-    puts "abiturients with semi-pass sum: #{abiturients[number..abiturients.size]}"
-end
-
-def main
-    if ARGV.size != 2
-        puts 'error'
-        exit 1
-    end
-    file_name = ARGV[0]
-    points = ARGV[1].to_i
-    if points == 0
-        error()
-    end
-    abiturients = read_file(file_name)
-    puts 'abiturients:'
-    print_abiturients(abiturients)
-    puts '1. list of abiturients with unsatisfactory grades:'
-    print_abiturients_with_unsatisfactory_grades(abiturients)
-    puts "2. abiturients with point higher than #{points.to_s}"
-    print_abiturients_with_higher_points(abiturients, points)
-    puts '3. abiturients with higher points:'
-    print_abiturients_with_highest_points(abiturients, points)
-end
-
-main()
     
+    def id
+        @id
+    end
+    
+    def surname
+        @surname
+    end
+    
+    def first_name
+        @first_name
+    end
+    
+    def last_name
+        @last_name
+    end
+    
+    def address
+        @address
+    end
+    
+    def phone
+        @phone
+    end
+    
+    def grades
+        @grades
+    end
+    
+    def sum_grades
+        @grades.inject(0) { |sum, x| sum + x }
+    end
+    
+    def to_s
+        "#{@id} #{@surname} #{@first_name} #{@last_name} #{@address} #{@phone} #{@grades}"
+    end
+    end
+    
+    def input_abiturients
+    abiturients = []
+    puts 'Enter abiturients (id, surname, first_name, last_name, address, phone, grades):'
+    while true
+        abiturient = gets.chomp
+        break if abiturient == ''
+        abiturient = abiturient.split(' ')
+        abiturients << Abiturients.new(abiturient[0], abiturient[1], abiturient[2], abiturient[3], abiturient[4], abiturient[5], abiturient[6..-1].map(&:to_i))
+    end
+    abiturients
+    end
+    
+    def output_abiturients(abiturients)
+    puts 'Abiturients:'
+    abiturients.each { |abiturient| puts abiturient }
+    end
+    
+    def output_unsatisfactory_grades(abiturients)
+    puts 'Abiturients with unsatisfactory grades:'
+    abiturients.each { |abiturient| puts abiturient if abiturient.grades.any? { |grade| grade < 4 } }
+    end
+    
+    def output_sum_grades(abiturients, sum)
+    puts "Abiturients whose total points are higher than #{sum}:"
+    abiturients.each { |abiturient| puts abiturient if abiturient.sum_grades > sum }
+    end
+
+    def output_highest_sum_grades(abiturients, count)
+    puts "Abiturients with the highest the sum of points (#{count}):"
+    abiturients.sort_by { |abiturient| abiturient.sum_grades }.reverse[0..count - 1].each { |abiturient| puts abiturient }
+    end
+
+puts 'Enter the number of abiturients'
+count = gets.chomp.to_i
+abiturients = []
+count.times do
+    abiturients << input_abiturients
+end
+
+output_abiturients(abiturients.flatten)
+output_unsatisfactory_grades(abiturients.flatten)
+puts 'Enter total points'
+sum = gets.chomp.to_i
+output_sum_grades(abiturients.flatten, sum)
+puts 'Enter count of highest the sum of points'
+count = gets.chomp.to_i
+output_highest_sum_grades(abiturients.flatten, count)
+
+
