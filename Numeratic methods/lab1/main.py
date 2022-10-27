@@ -60,8 +60,6 @@ def dihotomiya_steps_aposteriori(a, b, E):
 
 
 
-# From image we can see 3 point
-# (-4 , -3.5) (-2.5 , -1.5) (-0.5 , 0)
 
 start = timeit.default_timer()
 
