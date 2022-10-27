@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<units>
+    <unit name="IT" head="Ivanov">
+        <employee name="Ivan" surname="Ivanov" position="programmer" salary="1000" unit="IT"/>
+        <employee name="Petr" surname="Petrov" position="programmer" salary="1000" unit="IT"/>
+        <employee name="Sidor" surname="Sidorov" position="programmer" salary="1000" unit="IT"/>
+    </unit>
+    <unit name="HR" head="Petrov">
+        <employee name="Ivan" surname="Ivanov" position="HR" salary="1000" unit="HR"/>
+        <employee name="Petr" surname="Petrov" position="HR" salary="1000" unit="HR"/>
+        <employee name="Sidor" surname="Sidorov" position="HR" salary="1000" unit="HR"/>
+    </unit>
+</units>
