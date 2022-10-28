@@ -1,6 +1,4 @@
 
-package a;
-
 import mpi.*;
 import java.util.Random;
 import java.util.Scanner;
