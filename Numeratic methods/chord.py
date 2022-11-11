@@ -4,6 +4,8 @@ from sympy import *
 a = float(input("Enter a: "))
 b = float(input("Enter b: "))
 
+
+
 E = float(input("Enter E: "))
 x = Symbol('x')
 
