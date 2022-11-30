@@ -25,7 +25,6 @@ public class Main {
         Scanner in = new Scanner(System.in);
         int choice = 0;
         int choice2 = 0;
-        int choice3 = 0;
 
         while (choice != 4) {
             System.out.println("1. Add medicine");
