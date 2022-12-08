@@ -1,4 +1,3 @@
-# 3. Find the largest negative root of a nonlinear equation x^2 + sin(x) - 12x - 0.25 = 0 using direct and inverse interpolation (you use Newton's interpolation polynomial constructed at 10 nodes, which are the zeros of the Chebyshov polynomial)
 
 import numpy as np
 import matplotlib.pyplot as plt
