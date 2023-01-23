@@ -1,6 +1,6 @@
 import timeit
 
-E = 10**(-4)
+E = 10**(-3)
 
 def funk(x):
     s = x**3 + 6*(x**2) + 9*x + 2
@@ -34,31 +34,6 @@ def dihotomiya(a, b, E):
     x = (a+b)/2
     print(f"Point from {A} to {B} is {x} with E = {E}")
 
-def dihotomiya_steps(a, b, E):
-    n = 1
-    min = b - a
-
-    while min/(2**n) > E:
-        n += 1
-    return n
-
-def dihotomiya_steps_aposteriori(a, b, E):
-    n = 1
-    min = b - a
-    x = (a+b)/2
-    while min/(2**n) > E:
-        if funk(x) == 0:
-            break
-
-        if funk(a)*funk(x) < 0:
-            b = x
-        else:
-            a = x
-        n +=1
-        x = (a+b)/2
-    return n
-
-
 
 
 start = timeit.default_timer()
@@ -80,28 +55,14 @@ def Nuton(a, b, E):
         x0 = a
     else:
         x0 = b
-
+    steps = 0
     xn = x0 - (funk(x0)/funkd(x0))
     while abs(xn - x0) > E:
+        steps += 1
         x0 = xn
         xn = x0 - (funk(x0)/funkd(x0))
     print(f"Point from {a} to {b} is {xn} with E = {E}")
-
-
-def Nuton_steps(a, b, E):
-
-    n = 0
-    if funk(a)*funkdd(a) > 0:
-        x0 = a
-    else:
-        x0 = b
-
-    xn = x0 - (funk(x0)/funkd(x0))
-    while abs(xn - x0) > E:
-        x0 = xn
-        xn = x0 - (funk(x0)/funkd(x0))
-        n += 1
-    return n
+    print(f"Steps = {steps}")
 
 
 start = timeit.default_timer()
